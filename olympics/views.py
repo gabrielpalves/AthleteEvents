@@ -7,39 +7,29 @@ from rest_framework import status
 import sqlite3
 import csv
 
-@api_view(['GET', 'POST', 'REMOVE_ALL', 'FILL'])
+@api_view(['GET', 'POST', 'FILL', 'REMOVE_ALL'])
 def events_list(request):
     if request.method == 'GET':
         events = Event.objects.all()
         serializer = EventSerializer(events, many=True)
         return JsonResponse({'events': serializer.data})
     
-    if request.method == 'POST':
-        if not cant_repeat(request.data):
-            serializer = EventSerializer(data=request.data)
+    elif request.method == 'POST':
+        rd = request.data
+        rd = organize(rd)
+        if not cant_repeat(rd):
+            serializer = EventSerializer(data=rd)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response({"Message": "Data is already in the database"}, status=status.HTTP_208_ALREADY_REPORTED)
-    
-    if request.method == 'REMOVE_ALL':
-        con = sqlite3.connect("db.sqlite3")
-        cur = con.cursor()
 
-        sql = 'DELETE FROM olympics_event'
-        cur = con.cursor()
-        cur.execute(sql)
-
-        con.commit()
-        con.close()
-        return Response({'Message': 'Removed all data from the database'}, status=status.HTTP_204_NO_CONTENT)
-    
-    if request.method == 'FILL':
+    elif request.method == 'FILL':
         con = sqlite3.connect("db.sqlite3")
         cur = con.cursor()
 
         cur.execute("create table if not exists olympics_event (id integer, event_key integer, Name text, Sex text, Age integer, Height integer, Weight integer,\
-        Team text, NOC text, Games text, Year integer, Season text, City text, Sport text, Event text, Medal text)")
+        Team text, NOC text, Games text, Year integer, Season text, City text, Sport text, Event text, Medal text, CONSTRAINT id PRIMARY KEY (id))")
 
         cur.execute("SELECT id FROM olympics_event")
         ids = cur.fetchall()
@@ -67,6 +57,34 @@ def events_list(request):
         con.commit()
         con.close()
         return Response({"Message": "Database filled with athlete_events.csv"}, status=status.HTTP_201_CREATED)
+    
+    elif request.method == 'REMOVE_ALL':
+        con = sqlite3.connect("db.sqlite3")
+        cur = con.cursor()
+
+        sql = 'DELETE FROM olympics_event'
+        cur = con.cursor()
+        cur.execute(sql)
+
+        con.commit()
+        con.close()
+        return Response({'Message': 'Removed all data from the database'}, status=status.HTTP_204_NO_CONTENT)
+    
+    
+    # if request.method == 'DELETE_TABLE': # just for testing
+    #     con = sqlite3.connect("db.sqlite3")
+    #     cur = con.cursor()
+    #     try:
+    #         sql = 'DROP TABLE olympics_event'
+    #         cur.execute(sql)
+    #         con.commit()
+    #     except:
+    #         con.close()
+    #         return Response({"Message": "Table olympics_event already deleted."}, status=status.HTTP_204_NO_CONTENT)
+        
+    #     con.close()
+    #     return Response({"Message": "Table olympics_event deleted."}, status=status.HTTP_205_RESET_CONTENT)
+
 
 @api_view(['GET', 'PUT', 'DELETE'])
 def event_detail(request, id):
@@ -80,8 +98,10 @@ def event_detail(request, id):
         return Response(serializer.data)
 
     elif request.method == 'PUT':
-        if not cant_repeat(request.data):
-            serializer = EventSerializer(event, data=request.data)
+        rd = request.data
+        rd = organize(rd)
+        if not cant_repeat(rd):
+            serializer = EventSerializer(event, data=rd)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data)
@@ -92,8 +112,8 @@ def event_detail(request, id):
         event.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 def cant_repeat(data):
-    
     data_tuple = (data['Name'],
     data['Sex'],
     data['Age'],
@@ -112,11 +132,45 @@ def cant_repeat(data):
     con = sqlite3.connect("db.sqlite3")
     cur = con.cursor()
 
+    listOfTables = cur.execute(
+    """SELECT name FROM sqlite_master WHERE type='table'
+    AND name='olympics_event'; """).fetchall()
+    
+    if listOfTables == []:
+        return False
+
     cur.execute("SELECT Name, Sex, Age, Height, Weight, Team, NOC, Games, Year, Season, City, Sport, Event, Medal FROM olympics_event")
-    count = 0
     for row in cur.fetchall():
         if row == data_tuple:
             con.close()
             return True
     con.close()
     return False
+
+
+def organize(data): # this function just organizes the event_key field
+    con = sqlite3.connect("db.sqlite3")
+    cur = con.cursor()
+
+    listOfTables = cur.execute(
+    """SELECT name FROM sqlite_master WHERE type='table'
+    AND name='olympics_event'; """).fetchall()
+    
+    if listOfTables == []:
+        return data
+
+    name = data['Name']
+    cur.execute("SELECT event_key from olympics_event WHERE Name=?",(name,))
+    d = cur.fetchall()
+
+    if len(d) == 0: # organize the event_key of the new athlete
+        cur.execute("SELECT MAX(event_key) FROM olympics_event")
+        ek = cur.fetchall()[0][0]
+        if ek == None:
+            ek = 0
+        ek += 1
+        data['event_key'] = ek
+    else:
+        data['event_key'] = d[0][0]
+    con.close()
+    return data
