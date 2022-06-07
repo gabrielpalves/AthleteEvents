@@ -28,7 +28,7 @@ def validate_year(value):
         return value
 
 class Event(models.Model):
-    event_key = models.IntegerField(validators=[isPositive]) # unique number for each athlete
+    event_key = models.IntegerField() # unique number for each athlete
     Name = models.CharField(max_length=250)
     Sex = models.CharField(max_length=1, validators=[validate_sex]) # M, F
     Age = models.IntegerField(validators=[isPositive])
