@@ -28,21 +28,21 @@ def validate_year(value):
         return value
 
 class Event(models.Model):
-    event_key = models.IntegerField(validators=[isPositive]) # event key
-    name = models.CharField(max_length=250)
-    sex = models.CharField(max_length=1, validators=[validate_sex]) # M, F
-    age = models.IntegerField(validators=[isPositive])
-    height = models.IntegerField(validators=[isPositive])
-    weight = models.IntegerField(validators=[isPositive])
-    team = models.CharField(max_length=250)
-    noc = models.CharField(max_length=3)
-    games = models.CharField(max_length=250)
-    year = models.IntegerField(validators=[validate_year])
-    season = models.CharField(max_length=6) # summer, winter, spring, fall
-    city = models.CharField(max_length=250)
-    sport = models.CharField(max_length=250)
-    event = models.CharField(max_length=250)
-    medal = models.CharField(max_length=6) # bronze, silver, gold
+    event_key = models.IntegerField(validators=[isPositive]) # unique number for each athlete
+    Name = models.CharField(max_length=250)
+    Sex = models.CharField(max_length=1, validators=[validate_sex]) # M, F
+    Age = models.IntegerField(validators=[isPositive])
+    Height = models.IntegerField(validators=[isPositive]) # cm
+    Weight = models.IntegerField(validators=[isPositive]) # kg
+    Team = models.CharField(max_length=250)
+    NOC = models.CharField(max_length=3) # national olympic committee (3-letter code)
+    Games = models.CharField(max_length=250) # year and season
+    Year = models.IntegerField(validators=[validate_year]) # integer
+    Season = models.CharField(max_length=6) # summer or winter
+    City = models.CharField(max_length=250)
+    Sport = models.CharField(max_length=250)
+    Event = models.CharField(max_length=250)
+    Medal = models.CharField(max_length=6) # bronze, silver, gold or NA
 
     def __str__(self):
-        return self.name + ' ' + self.games + ' ' + self.event
+        return self.Name + ' ' + self.Games + ' ' + self.Event + f'({self.Medal})'*(self.Medal != 'NA')
