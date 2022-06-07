@@ -12,7 +12,7 @@ Exemplo (Windows):
 - Instale o Django Rest Framework: 'pip install djangorestframework';
 - Garanta que tudo esteja correto com os comandos: 'python manage.py makemigrations' e em seguida 'python manage.py migrate';
 - Rode o projeto com: 'python manage.py runserver';
-- Acesse no seu navegador o local onde o servidor foi iniciado (ex: http://127.0.0.1:8000/). A página não será encontrada;
+- Acesse no seu navegador o local onde o servidor foi iniciado (ex: http://127.0.0.1:8000/). No entanto, não foi definida uma página inicial. Para rodar o projeto, leia os passos abaixo.
 
 ### Utilizando o projeto
 - Para listar todas as informações do banco de dados, adicione 'events/' no caminho: http://127.0.0.1:8000/events/;
